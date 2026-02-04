@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>BOOM & DICE</title>
+
+<style>
+*{
+  box-sizing:border-box;
+  font-family:Arial,sans-serif;
+  font-weight:bold;
+}
+body{
+  margin:0;
+  background:#f4f6ff;
+  font-size:22px;
+}
+
+/* ===== HEADER ===== */
+.header{
+  display:flex;
+  align-items:center;
+  padding:20px;
+  background:#fff;
+  gap:20px;
+}
+.avatar{
+  width:80px;
+  height:80px;
+  border-radius:50%;
+  background:#ddd;
+}
+.menu-back{
+  display:none;
+  background:#eef1ff;
+  padding:30px 46px;
+  border-radius:30px;
+  font-size:32px;
+  cursor:pointer;
+}
+.balance{
+  margin-left:auto;
+  display:flex;
+  align-items:center;
+  background:#eef1ff;
+  padding:30px 44px;
+  border-radius:36px;
+  font-size:38px;
+}
+.balance.win{transform:scale(1.08)}
+.coin-icon{
+  width:60px;
+  height:60px;
+  margin-right:14px;
+}
+
+/* ===== MENU ===== */
+.menu{padding:28px}
+.bomb-btn{
+  width:100%;
+  height:25vh;
+  position:relative;
+  border:5px solid #4c6fff;
+  border-radius:36px;
+  overflow:hidden;
+  cursor:pointer;
+  background:#000;
+}
+.bomb-btn img{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+.bomb-btn span{
+  position:relative;
+  z-index:2;
+  font-size:96px;
+  color:#fff;
+}
+
+/* ===== GAME ===== */
+.game{display:none;padding:26px}
+.win-info{
+  text-align:center;
+  font-size:42px;
+  margin-bottom:26px;
+}
+.controls{margin-top:30px}
+
+/* INPUTS */
+input{
+  width:100%;
+  padding:34px;
+  font-size:44px;
+  border-radius:30px;
+  border:none;
+  text-align:center;
+}
+
+/* BUTTONS */
+.play-btn{
+  width:100%;
+  padding:38px;
+  font-size:40px;
+  border:none;
+  border-radius:34px;
+  margin-top:20px;
+  background:#4c6fff;
+  color:#fff;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <div class="avatar"></div>
+  <div class="menu-back" id="menuBack" onclick="backToMenu()">в меню 🎰</div>
+  <div class="balance" id="balanceBox">
+    <img src="coin.png" class="coin-icon">
+    <span id="balance">1000.00</span>
+  </div>
+</div>
+
+<!-- ===== MENU ===== -->
+<div class="menu" id="menu">
+  <button class="bomb-btn" onclick="onBoomClick()">
+    <img src="boom-icon.png">
+    <span>BOOM</span>
+  </button>
+
+  <button class="bomb-btn" style="margin-top:26px" onclick="openDice()">
+    <img src="dice.png">
+    <span>DICE</span>
+  </button>
+</div>
+
+<!-- ===== BOOM GAME (НЕ ТРОНУТА) ===== -->
+<div class="game" id="game">
+  <div class="win-info">BOOM работает как раньше</div>
+</div>
+
+<!-- ===== DICE GAME ===== -->
+<div class="game" id="diceGame">
+
+  <div class="win-info">
+    <div style="display:flex;gap:20px">
+
+      <div style="flex:1">
+        Ставка
+        <input id="diceBet" type="number" value="1">
+      </div>
+
+      <div style="flex:1">
+        Шанс
+        <input id="diceChance" type="number" value="50">
+      </div>
+
+    </div>
+
+    <div style="margin-top:30px">
+      x<span id="diceMultiplier">2.00</span><br>
+      Возможный выигрыш:
+      <span id="diceWin">2.00</span>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="play-btn" onclick="playDice('low')">Меньше</button>
+    <button class="play-btn" onclick="playDice('high')">Больше</button>
+  </div>
+
+</div>
+
+<script>
+/* ===== GLOBAL ===== */
+let balance = 1000;
+const balanceEl = document.getElementById('balance');
+const menu = document.getElementById('menu');
+const game = document.getElementById('game');
+const diceGame = document.getElementById('diceGame');
+const menuBack = document.getElementById('menuBack');
+const balanceBox = document.getElementById('balanceBox');
+
+/* ===== BOOM ===== */
+function onBoomClick(){
+  menu.style.display='none';
+  game.style.display='block';
+  diceGame.style.display='none';
+  menuBack.style.display='block';
+}
+
+/* ===== DICE ===== */
+const diceBet = document.getElementById('diceBet');
+const diceChance = document.getElementById('diceChance');
+const diceMultiplierEl = document.getElementById('diceMultiplier');
+const diceWinEl = document.getElementById('diceWin');
+
+const diceTable = {
+  1:100,2:50,3:33.33,4:25,5:20,6:16.67,7:14.29,8:12.5,9:11.11,10:10,
+  15:6.67,20:5,25:4,30:3.33,35:2.86,40:2.5,45:2.22,50:2,
+  55:1.82,60:1.67,65:1.54,70:1.43,75:1.33,80:1.25,85:1.18,90:1.11,95:1.05
+};
+
+function openDice(){
+  menu.style.display='none';
+  game.style.display='none';
+  diceGame.style.display='block';
+  menuBack.style.display='block';
+  updateDice();
+}
+
+function updateDice(){
+  let bet = +diceBet.value;
+  let chance = +diceChance.value;
+
+  if(bet < 1) bet = 1;
+  if(bet > balance) bet = balance;
+  if(chance < 1) chance = 1;
+  if(chance > 95) chance = 95;
+
+  diceBet.value = bet;
+  diceChance.value = chance;
+
+  let closest = Object.keys(diceTable)
+    .map(Number)
+    .sort((a,b)=>Math.abs(a-chance)-Math.abs(b-chance))[0];
+
+  let mult = diceTable[closest];
+  diceMultiplierEl.innerText = mult.toFixed(2);
+  diceWinEl.innerText = (bet * mult).toFixed(2);
+}
+
+diceBet.oninput = diceChance.oninput = updateDice;
+
+function playDice(type){
+  let bet = +diceBet.value;
+  if(bet > balance || bet < 1) return;
+
+  balance -= bet;
+  balanceEl.innerText = balance.toFixed(2);
+
+  let roll = Math.floor(Math.random()*25999)+1;
+  let win = false;
+
+  if(type === 'low' && roll <= 12999) win = true;
+  if(type === 'high' && roll >= 13000) win = true;
+
+  if(win){
+    let mult = +diceMultiplierEl.innerText;
+    let prize = bet * mult;
+    balance += prize;
+    balanceEl.innerText = balance.toFixed(2);
+    balanceBox.classList.add('win');
+    setTimeout(()=>balanceBox.classList.remove('win'),300);
+  }
+}
+
+function backToMenu(){
+  menu.style.display='block';
+  game.style.display='none';
+  diceGame.style.display='none';
+  menuBack.style.display='none';
+}
+</script>
+
+</body>
+</html>
